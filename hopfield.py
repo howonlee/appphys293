@@ -37,3 +37,36 @@ class HopNet(object):
                     new_weights[i,j] += input_patterns[m][i] * input_patterns[m][j]
         new_weights *= 1 / float(n)
         self.weights = new_weights
+
+def process_pat(arr):
+    arr = arr * 2
+    return arr - 1
+
+if __name__ == "__main__":
+    a_pattern = process_pat(np.array([[0, 0, 1, 0, 0],
+        [0, 1, 0, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1]]))
+
+    b_pattern = process_pat(np.array([[1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0]]))
+
+    c_pattern = process_pat(np.array([[1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1]]))
+
+    inputs = np.array([a_pattern.flatten(), b_pattern.flatten(), c_pattern.flatten()])
+    net = HopNet(35)
+    net.hebbian_training(inputs)
