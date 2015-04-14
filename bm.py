@@ -33,12 +33,12 @@ def node_state(val):
     return -1
 
 
-def pgm_search(net, seeds, r):
+def pbm_search(net, seeds, r):
     #r is a float, omae
     marks = collections.defaultdict(int)
     vals = collections.defaultdict(int)
     nodes = dict(net.nodes(data=True))
-    impossible = {}
+    impossible = {} # add the seeds here?
     unused = seeds[:]
     used = []
     t1 = 0
@@ -67,9 +67,21 @@ def pgm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pgm_learn(net, order, r, eps):
-    pass
-    #do the bm learn step
+def pbm_learn(net, order, r, eps):
+    frontier_edges = [] #learn on the frontier, everything that's been percolated
+    for member in reversed(order):
+        #some shit here
+        pass
+    return net #only a formality
+
+def running_sum(net):
+    running_pos = 0
+    running_neg = 0
+    for first, second in net.nodes(data=True):
+        if second["state"] > 0:
+            running_pos += 1
+        else:
+            running_neg += 1
 
 if __name__ == "__main__":
     #an old fun trick:
@@ -86,12 +98,3 @@ if __name__ == "__main__":
         node_data["state"] = flip()
     seeds = get_seeds(net, 784)
     pgm_res = pgm_search(net, seeds, 0.75)
-    running_pos = 0
-    running_neg = 0
-    for first, second in net.nodes(data=True):
-        if second["state"] > 0:
-            running_pos += 1
-        else:
-            running_neg += 1
-
-    #print len(pgm_res)
