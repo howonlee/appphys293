@@ -22,6 +22,11 @@ def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
+def pgm_clamp(net, data):
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
+    #clamp here
+    return net
+
 def sample_net(net):
     #get a random node from the net
     #list its state
@@ -79,9 +84,9 @@ def pbm_search(net, seeds, r):
 def pbm_learn(net_data, net_model, epsilon):
     for data_edge in net_data.edges_iter():
         delta = epsilon * (data_edge[0] * data_edge[1] - model_edge[0] * model_edge[1])
-        net_data.weights[data_edge] -= delta
-    #and this is it
+        net_data[data_edge[0]][data_edge[1]]["weight"] -= delta
     return net_data
+
 
 def running_sum(net):
     running_pos = 0
@@ -106,5 +111,8 @@ if __name__ == "__main__":
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     seeds = get_seeds(net, 784)
+    pgm_model = pgm_search(net, seeds, 0.75)
     #clamp the net values, I suppose here? I forget how to
-    pgm_res = pgm_search(net, seeds, 0.75)
+    data = [1] * 784
+    pgm_data = pgm_clamp(net, data)
+    pgm_data = pgm_search(net, data, 0.75)
