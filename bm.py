@@ -22,9 +22,11 @@ def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
-def pgm_clamp(net, data):
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
-    #clamp here
+def pbm_clamp(net, data):
+    #data must be a list
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:len(data)]
+    for seed, _ in top:
+        net[seed]["state"] = data.pop(0)
     return net
 
 def sample_net(net):
@@ -81,11 +83,13 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_data, net_model, epsilon):
-    for data_edge in net_data.edges_iter():
-        delta = epsilon * (data_edge[0] * data_edge[1] - model_edge[0] * model_edge[1])
-        net_data[data_edge[0]][data_edge[1]]["weight"] -= delta
-    return net_data
+def pbm_learn(net_d, net_m, epsilon=0.05):
+    #d = data, m = model
+    for data_edge in net_d.edges_iter():
+        h, t = data_edge #head, tail of the edge
+        delta = epsilon * (net_d[h]["state"] * net_d[t]["state"] - net_m[h]["state"] * net_m[t]["state"]) #the network values for this
+        net_d[h][t]["weight"] -= delta
+    return net_d
 
 
 def running_sum(net):
@@ -98,10 +102,7 @@ def running_sum(net):
             running_neg += 1
 
 if __name__ == "__main__":
-    #an old fun trick:
-    #words are nodes
-    #bigrams are edges
-    #bam! complex network
+    #must now test
     net = nx.Graph()
     with open("corpus.txt", "r") as corpus_file:
         words = corpus_file.read().split()
@@ -110,9 +111,13 @@ if __name__ == "__main__":
             net.add_edge(first, second, weight=npr.random())
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
-    seeds = get_seeds(net, 784)
-    pgm_model = pgm_search(net, seeds, 0.75)
-    #clamp the net values, I suppose here? I forget how to
-    data = [1] * 784
-    pgm_data = pgm_clamp(net, data)
-    pgm_data = pgm_search(net, data, 0.75)
+    for x in xrange(100):
+        seeds = get_seeds(net, 784)
+        pbm_model = pbm_search(net, seeds, 0.75) ## deep copy here
+        #clamp the net values, I suppose here? I forget how to
+        data = [1] * 784
+        pbm_clamp(net, data)
+        pbm_data = pbm_search(net, seeds, 0.75) ## deep copy
+        pbm_learn(pbm_data, pbm_model)
+    for n1, n2 in net.edges_iter():
+        print net[n1][n2]["weight"]
