@@ -22,12 +22,21 @@ def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
+def sample_net(net):
+    #get a random node from the net
+    #list its state
+    #list all the neighbors' states
+    #list all the weights to the neighbors
+    #then, you can do this for many nets
+    pass
+
 def flip():
     if random.random() > 0.5:
         return 1
     return -1
 
 def node_state(val):
+    #hopfield update, kind of (not really)
     if val > 0:
         return 1
     return -1
@@ -67,12 +76,12 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net, order, r, eps):
-    frontier_edges = [] #learn on the frontier, everything that's been percolated
-    for member in reversed(order):
-        #some shit here
-        pass
-    return net #only a formality
+def pbm_learn(net_data, net_model, epsilon):
+    for data_edge in net_data.edges_iter():
+        delta = epsilon * (data_edge[0] * data_edge[1] - model_edge[0] * model_edge[1])
+        net_data.weights[data_edge] -= delta
+    #and this is it
+    return net_data
 
 def running_sum(net):
     running_pos = 0
@@ -97,4 +106,5 @@ if __name__ == "__main__":
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     seeds = get_seeds(net, 784)
+    #clamp the net values, I suppose here? I forget how to
     pgm_res = pgm_search(net, seeds, 0.75)
