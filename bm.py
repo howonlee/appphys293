@@ -26,8 +26,9 @@ def get_seeds(net, num_seeds):
 def pbm_clamp(net, data):
     #data must be a list
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:len(data)]
-    for seed, _ in top:
-        net[seed]["state"] = data.pop(0)
+    nodes = dict(net.nodes(data=True))
+    for idx, seed in enumerate(top):
+        nodes[seed[0]]["state"] = data[idx] #mutability, I hope
     return net
 
 def sample_net(net, num_samples=50):
@@ -36,6 +37,12 @@ def sample_net(net, num_samples=50):
     for node, data in nodes:
         print "node: %d, state: %d" % (node, data["state"])
         print "degree: %d" % (net.degree(node),)
+
+def sample_top_net(net, num_samples=30):
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_samples]
+    nodes = dict(net.nodes(data=True))
+    for seed, _ in top:
+        print nodes[seed]["state"]
 
 def flip():
     if random.random() > 0.5:
@@ -48,20 +55,43 @@ def node_state(val):
         return 1
     return -1
 
+def pbm_stupid_search(net, iters=70000):
+    markpoint = 2500
+    nodes = net.nodes(data=True)
+    nodes_dict = dict(nodes)
+    marks = collections.defaultdict(int)
+    impossible = set()
+    for x in xrange(iters):
+        curr_node, curr_data = random.choice(nodes)
+        marks[curr_node] += 1
+        if marks[curr_node] > markpoint:
+            impossible.add(curr_node)
+        if curr_node in impossible:
+            continue
+        curr_state = curr_data["state"]
+        curr_node_t = 0
+        curr_node_val = 0
+        for neighbor in net.neighbors(curr_node):
+            curr_node_t += 1
+            curr_node_val += curr_state * nodes_dict[neighbor]["state"] * net[curr_node][neighbor]["weight"] #times weight here eventually
+            if curr_node_t > 25000: #hack
+                break
+        curr_data["state"] = node_state(curr_node_val)
+    return net
+
 
 def pbm_search(net, seeds, r):
-    #r is a float, omae
     marks = collections.defaultdict(int)
     vals = collections.defaultdict(int)
     nodes = dict(net.nodes(data=True))
     impossible = {} # add the seeds here?
     unused = seeds[:]
     used = []
-    t1 = 0
+    #t1 = 0
     while unused:
-        t1 += 1
-        if t1 % 1000 == 0:
-            print "t1: ", t1
+        #t1 += 1
+        #if t1 % 1000 == 0:
+        #    print "t1: ", t1
         t2 = 0
         curr_node = unused.pop(random.randint(0, len(unused)-1))
         curr_state = nodes[curr_node]["state"]
@@ -69,6 +99,7 @@ def pbm_search(net, seeds, r):
             if impossible.has_key(neighbor):
                 continue
             marks[neighbor] += 1
+            #this is not good below
             vals[neighbor] += curr_state * net[curr_node][neighbor]["weight"] #times weight here eventually
             deg = net.degree(neighbor)
             req_degree = int(deg * r) + 1
@@ -83,12 +114,17 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.05):
+def pbm_learn(net_d, net_m, epsilon=0.01):
     #d = data, m = model
+    states_d = nx.get_node_attributes(net_d, "state")
+    states_m = nx.get_node_attributes(net_m, "state")
+    total_delta = 0
     for data_edge in net_d.edges_iter():
         h, t = data_edge #head, tail of the edge
-        delta = epsilon * (net_d[h]["state"] * net_d[t]["state"] - net_m[h]["state"] * net_m[t]["state"]) #the network values for this
+        delta = epsilon * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
+        total_delta += delta
         net_d[h][t]["weight"] -= delta
+    print "total delta for this learn step: ", total_delta
     return net_d
 
 
@@ -101,28 +137,32 @@ def running_sum(net):
         else:
             running_neg += 1
 
-
-if __name__ == "__main__":
-    #must now test
+def create_word_graph(filename="corpus.txt"):
     net = nx.Graph()
-    with open("corpus.txt", "r") as corpus_file:
+    with open(filename, "r") as corpus_file:
         words = corpus_file.read().split()
         washed, word_dict = wash(words)
         for first, second in zip(washed, washed[1:]):
             net.add_edge(first, second, weight=npr.random())
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
-    sample_net(net)
-    """
-    for x in xrange(5):
+    return net
+
+if __name__ == "__main__":
+    #must now test
+    net = create_word_graph()
+    for x in xrange(30):
         print "x: ", x
-        seeds = get_seeds(net, 784)
-        pbm_model = net.copy()
-        pbm_model = pbm_search(pbm_model, seeds, 0.75) ## deep copy here
-        #clamp the net values, I suppose here? I forget how to
-        data = [1] * 784
-        pbm_data = net.copy()
-        pbm_clamp(pbm_data, data)
-        pbm_data = pbm_search(pbm_data, seeds, 0.75) ## deep copy
+        data = [1] * 30 #reset every time, because I've been popping
+        seeds = get_seeds(net, 30)
+        pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
+        print "============"
+        sample_top_net(pbm_data)
+        print "============"
+        sample_top_net(pbm_model)
+        print "============"
+        pbm_stupid_search(pbm_model)
+        pbm_stupid_search(pbm_data)
+        #pbm_search(pbm_model, seeds, 0.75) #mutates
+        #pbm_search(pbm_data, seeds, 0.75) #mutates
         net = pbm_learn(pbm_data, pbm_model)
-    """
