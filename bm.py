@@ -139,12 +139,16 @@ if __name__ == "__main__":
         data = [1] * 784 #reset every time, because I've been popping
         seeds = get_seeds(net, 784)
         pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
-        print "============"
-        sample_top_net(pbm_data)
-        print "============"
-        sample_top_net(pbm_model)
-        print "============"
         pbm_search(pbm_model, seeds, 0.75) #mutates
         pbm_search(pbm_data, seeds, 0.75) #mutates
         net = pbm_learn(pbm_data, pbm_model)
+    data2 = [1] * 392
+    data2_tail = [0] * 392
+    data2.extend(data2_tail)
+    net2 = pbm_clamp(net.copy(), data2)
+    print "before search: "
+    sample_top_net(net2, num_samples=784)
+    pbm_search(net2, seeds, 0.75)
+    print "after search: "
+    sample_top_net(net2, num_samples=784)
     #time to test this sucket
