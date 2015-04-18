@@ -55,30 +55,13 @@ def node_state(val):
         return 1
     return -1
 
-def pbm_stupid_search(net, iters=70000):
-    markpoint = 2500
-    nodes = net.nodes(data=True)
-    nodes_dict = dict(nodes)
-    marks = collections.defaultdict(int)
-    impossible = set()
-    for x in xrange(iters):
-        curr_node, curr_data = random.choice(nodes)
-        marks[curr_node] += 1
-        if marks[curr_node] > markpoint:
-            impossible.add(curr_node)
-        if curr_node in impossible:
-            continue
-        curr_state = curr_data["state"]
-        curr_node_t = 0
-        curr_node_val = 0
-        for neighbor in net.neighbors(curr_node):
-            curr_node_t += 1
-            curr_node_val += curr_state * nodes_dict[neighbor]["state"] * net[curr_node][neighbor]["weight"] #times weight here eventually
-            if curr_node_t > 25000: #hack
-                break
-        curr_data["state"] = node_state(curr_node_val)
-    return net
-
+def energy(net):
+    total_energy = 0
+    nodes = dict(net.nodes(data=True))
+    for first, second in net.edges_iter():
+        weight = net[first][second]["weight"]
+        total_energy -= weight * nodes[first]["state"] * nodes[second]["state"]
+    return total_energy
 
 def pbm_search(net, seeds, r):
     marks = collections.defaultdict(int)
@@ -100,7 +83,7 @@ def pbm_search(net, seeds, r):
                 continue
             marks[neighbor] += 1
             #this is not good below
-            vals[neighbor] += curr_state * net[curr_node][neighbor]["weight"] #times weight here eventually
+            vals[neighbor] += curr_state * net[curr_node][neighbor]["weight"]
             deg = net.degree(neighbor)
             req_degree = int(deg * r) + 1
             t2 += 1
@@ -151,18 +134,17 @@ def create_word_graph(filename="corpus.txt"):
 if __name__ == "__main__":
     #must now test
     net = create_word_graph()
-    for x in xrange(30):
+    for x in xrange(1):
         print "x: ", x
-        data = [1] * 30 #reset every time, because I've been popping
-        seeds = get_seeds(net, 30)
+        data = [1] * 784 #reset every time, because I've been popping
+        seeds = get_seeds(net, 784)
         pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
         print "============"
         sample_top_net(pbm_data)
         print "============"
         sample_top_net(pbm_model)
         print "============"
-        pbm_stupid_search(pbm_model)
-        pbm_stupid_search(pbm_data)
-        #pbm_search(pbm_model, seeds, 0.75) #mutates
-        #pbm_search(pbm_data, seeds, 0.75) #mutates
+        pbm_search(pbm_model, seeds, 0.75) #mutates
+        pbm_search(pbm_data, seeds, 0.75) #mutates
         net = pbm_learn(pbm_data, pbm_model)
+    #time to test this sucket
