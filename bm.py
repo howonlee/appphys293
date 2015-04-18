@@ -5,6 +5,7 @@ import operator
 import itertools
 import collections
 import random
+import time
 
 def wash(words):
     curr_word = 0
@@ -29,13 +30,12 @@ def pbm_clamp(net, data):
         net[seed]["state"] = data.pop(0)
     return net
 
-def sample_net(net):
-    #get a random node from the net
-    #list its state
-    #list all the neighbors' states
-    #list all the weights to the neighbors
-    #then, you can do this for many nets
-    pass
+def sample_net(net, num_samples=50):
+    nodes = net.nodes(data=True)
+    nodes = random.sample(nodes, num_samples)
+    for node, data in nodes:
+        print "node: %d, state: %d" % (node, data["state"])
+        print "degree: %d" % (net.degree(node),)
 
 def flip():
     if random.random() > 0.5:
@@ -101,6 +101,7 @@ def running_sum(net):
         else:
             running_neg += 1
 
+
 if __name__ == "__main__":
     #must now test
     net = nx.Graph()
@@ -111,13 +112,17 @@ if __name__ == "__main__":
             net.add_edge(first, second, weight=npr.random())
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
-    for x in xrange(100):
+    sample_net(net)
+    """
+    for x in xrange(5):
+        print "x: ", x
         seeds = get_seeds(net, 784)
-        pbm_model = pbm_search(net, seeds, 0.75) ## deep copy here
+        pbm_model = net.copy()
+        pbm_model = pbm_search(pbm_model, seeds, 0.75) ## deep copy here
         #clamp the net values, I suppose here? I forget how to
         data = [1] * 784
-        pbm_clamp(net, data)
-        pbm_data = pbm_search(net, seeds, 0.75) ## deep copy
-        pbm_learn(pbm_data, pbm_model)
-    for n1, n2 in net.edges_iter():
-        print net[n1][n2]["weight"]
+        pbm_data = net.copy()
+        pbm_clamp(pbm_data, data)
+        pbm_data = pbm_search(pbm_data, seeds, 0.75) ## deep copy
+        net = pbm_learn(pbm_data, pbm_model)
+    """
