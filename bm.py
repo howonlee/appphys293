@@ -24,8 +24,8 @@ def get_seeds(net, num_seeds):
     return [x[0] for x in top]
 
 def pbm_clamp(net, data):
-    #data must be a list
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:len(data)]
+    #data must be a 1d numpy array
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:data.shape[0]]
     nodes = dict(net.nodes(data=True))
     for idx, seed in enumerate(top):
         nodes[seed[0]]["state"] = data[idx] #mutability, I hope
@@ -131,24 +131,40 @@ def create_word_graph(filename="corpus.txt"):
         node_data["state"] = flip()
     return net
 
+def learn_step(net, data):
+    """
+    Data should be 1d numpy array
+    """
+    data = np.array(data)
+    seeds = get_seeds(net, data.shape[0]) #seed INDICES
+    pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
+    pbm_search(pbm_model, seeds, 0.75) #mutates
+    pbm_search(pbm_data, seeds, 0.75) #mutates
+    return pbm_learn(pbm_data, pbm_model)
+
+def completion_task(net, data_head, len_data):
+    """
+    @param net the network that encodes the BM
+    @param data_head: 1d np array: what you got of the data, needs to be completed
+    @param len_data: int:  the length of the data, so len(data_head) + length of the bit you need to compute
+    @returns the whole 1d data array, completed
+    """
+    data_head = np.array(data_head)
+    seeds = get_seeds(net, len_data)
+    len_tail = len_data - data_head.shape[0]
+    genned_tail = np.rint(npr.random(len_tail))
+    total_data = np.hstack((data_head, genned_tail))
+    net2 = pbm_clamp(net.copy(), total_data)
+    print "before search:",
+    sample_top_net(net2, num_samples=len_data)
+    pbm_search(net2, seeds, 0.75)
+    print "after search:"
+    sample_top_net(net2, num_samples=len_data)
+
 if __name__ == "__main__":
     #must now test
     net = create_word_graph()
-    for x in xrange(1):
-        print "x: ", x
-        data = [1] * 784 #reset every time, because I've been popping
-        seeds = get_seeds(net, 784)
-        pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
-        pbm_search(pbm_model, seeds, 0.75) #mutates
-        pbm_search(pbm_data, seeds, 0.75) #mutates
-        net = pbm_learn(pbm_data, pbm_model)
+    data = [1] * 784
+    net = learn_step(net, data)
     data2 = [1] * 392
-    data2_tail = [0] * 392
-    data2.extend(data2_tail)
-    net2 = pbm_clamp(net.copy(), data2)
-    print "before search: "
-    sample_top_net(net2, num_samples=784)
-    pbm_search(net2, seeds, 0.75)
-    print "after search: "
-    sample_top_net(net2, num_samples=784)
-    #time to test this sucket
+    completion_task(net, data2, 784)
