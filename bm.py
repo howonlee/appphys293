@@ -6,6 +6,8 @@ import itertools
 import collections
 import random
 import time
+import cPickle
+import gzip
 
 def wash(words):
     curr_word = 0
@@ -22,6 +24,9 @@ def wash(words):
 def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
+
+def get_tops(net, num_seeds):
+    return sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
 
 def pbm_clamp(net, data):
     #data must be a 1d numpy array
@@ -155,11 +160,13 @@ def completion_task(net, data_head, len_data):
     genned_tail = np.rint(npr.random(len_tail))
     total_data = np.hstack((data_head, genned_tail))
     net2 = pbm_clamp(net.copy(), total_data)
-    print "before search:",
-    sample_top_net(net2, num_samples=len_data)
     pbm_search(net2, seeds, 0.75)
-    print "after search:"
-    sample_top_net(net2, num_samples=len_data)
+    return np.array([x[0] for x in get_tops(net2)])
+
+def unpickle_mnist(filename="mnist.pkl.gz"):
+    with gzip.open(filename, "rb") as gzip_file:
+        train_set, valid_set, test_set = cPickle.load(gzip_file)
+    return train_set, valid_set, test_set
 
 if __name__ == "__main__":
     #must now test
