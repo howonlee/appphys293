@@ -26,7 +26,12 @@ def get_seeds(net, num_seeds):
     return [x[0] for x in top]
 
 def get_tops(net, num_seeds):
-    return sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
+    nodes = dict(net.nodes(data=True))
+    res = []
+    for idx, seed in enumerate(top):
+        res.append(nodes[seed[0]]["state"])
+    return res
 
 def pbm_clamp(net, data):
     #data must be a 1d numpy array
@@ -131,7 +136,7 @@ def create_word_graph(filename="corpus.txt"):
         words = corpus_file.read().split()
         washed, word_dict = wash(words)
         for first, second in zip(washed, washed[1:]):
-            net.add_edge(first, second, weight=npr.random())
+            net.add_edge(first, second, weight=npr.normal())
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     return net
@@ -161,7 +166,7 @@ def completion_task(net, data_head, len_data):
     total_data = np.hstack((data_head, genned_tail))
     net2 = pbm_clamp(net.copy(), total_data)
     pbm_search(net2, seeds, 0.75)
-    return np.array([x[0] for x in get_tops(net2)])
+    return np.array(get_tops(net2, len_data))
 
 def unpickle_mnist(filename="mnist.pkl.gz"):
     with gzip.open(filename, "rb") as gzip_file:
@@ -171,7 +176,11 @@ def unpickle_mnist(filename="mnist.pkl.gz"):
 if __name__ == "__main__":
     #must now test
     net = create_word_graph()
-    data = [1] * 784
+    data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
+    print np.array(get_tops(net, 784))
+    print "============"
     net = learn_step(net, data)
-    data2 = [1] * 392
-    completion_task(net, data2, 784)
+    print np.array(get_tops(net, 784))
+    print "============"
+    data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
+    print completion_task(net, data2, 784)
