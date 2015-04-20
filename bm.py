@@ -185,22 +185,25 @@ def unpack_set(data_set):
 def get_digit(data_list, label_list, digit):
     return [x[1] for x in filter(lambda x: label_list[x[0]] == digit, enumerate(data_list))]
 
-if __name__ == "__main__":
+def make_mnist_sample():
     train_set, valid_set, test_set = unpickle_mnist()
     train_data, train_labels = unpack_set(train_set)
     train_zeros = get_digit(train_data, train_labels, 0)
-    honking_zero = train_zeros[45].reshape(28,28)
-    plt.imshow(honking_zero)
-    plt.show()
-    """
+    random.shuffle(train_zeros) #inplace
+    sample, completion = train_zeros[:50], train_zeros[100]
+    return sample, completion
+
+if __name__ == "__main__":
+    sample, completion = make_mnist_sample()
     net = create_word_graph()
-    data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
+    for x in xrange(50):
+        print "x: ", x
+        net = learn_step(net, sample[x])
+    print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(10):
-        net = learn_step(net, data)
-    res1 = np.array(get_tops(net, 784))
-    print "============"
-    data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
-    res2 = completion_task(net, data2, 784)
-    print res1 - res2
-    """
+    completion = completion[:392]
+    res2 = completion_task(net, completion, 784)
+    res2 = res2.reshape(28, 28)
+    print res2
+    plt.imshow(res2)
+    plt.show()
