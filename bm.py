@@ -7,6 +7,7 @@ import collections
 import random
 import time
 import cPickle
+import matplotlib.pyplot as plt
 import gzip
 
 def wash(words):
@@ -107,7 +108,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.01):
+def pbm_learn(net_d, net_m, epsilon=0.5):
     #d = data, m = model
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
@@ -173,14 +174,33 @@ def unpickle_mnist(filename="mnist.pkl.gz"):
         train_set, valid_set, test_set = cPickle.load(gzip_file)
     return train_set, valid_set, test_set
 
+def unpack_set(data_set):
+    data, labels = data_set
+    data_list, label_list = [], []
+    for x in xrange(data.shape[0]):
+        data_list.append(data[x, :])
+        label_list.append(labels[x])
+    return data_list, label_list
+
+def get_digit(data_list, label_list, digit):
+    return [x[1] for x in filter(lambda x: label_list[x[0]] == digit, enumerate(data_list))]
+
 if __name__ == "__main__":
-    #must now test
+    train_set, valid_set, test_set = unpickle_mnist()
+    train_data, train_labels = unpack_set(train_set)
+    train_zeros = get_digit(train_data, train_labels, 0)
+    honking_zero = train_zeros[45].reshape(28,28)
+    plt.imshow(honking_zero)
+    plt.show()
+    """
     net = create_word_graph()
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
-    print np.array(get_tops(net, 784))
     print "============"
-    net = learn_step(net, data)
-    print np.array(get_tops(net, 784))
+    for x in xrange(10):
+        net = learn_step(net, data)
+    res1 = np.array(get_tops(net, 784))
     print "============"
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
-    print completion_task(net, data2, 784)
+    res2 = completion_task(net, data2, 784)
+    print res1 - res2
+    """
