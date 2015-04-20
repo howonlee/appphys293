@@ -108,7 +108,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.5):
+def pbm_learn(net_d, net_m, epsilon=0.01):
     #d = data, m = model
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
@@ -190,20 +190,19 @@ def make_mnist_sample():
     train_data, train_labels = unpack_set(train_set)
     train_zeros = get_digit(train_data, train_labels, 0)
     random.shuffle(train_zeros) #inplace
-    sample, completion = train_zeros[:50], train_zeros[100]
+    sample, completion = train_zeros[:500], train_zeros[1000]
     return sample, completion
 
 if __name__ == "__main__":
     sample, completion = make_mnist_sample()
     net = create_word_graph()
-    for x in xrange(50):
+    for x in xrange(500):
         print "x: ", x
-        net = learn_step(net, sample[x])
+        net = learn_step(net, np.rint(sample[x]))
     print np.array(get_tops(net, 784))
     print "============"
-    completion = completion[:392]
+    completion = np.rint(completion[:392])
     res2 = completion_task(net, completion, 784)
     res2 = res2.reshape(28, 28)
-    print res2
     plt.imshow(res2)
-    plt.show()
+    plt.savefig("res2")
