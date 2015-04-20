@@ -78,7 +78,7 @@ def pbm_search(net, seeds, r):
     marks = collections.defaultdict(int)
     vals = collections.defaultdict(int)
     nodes = dict(net.nodes(data=True))
-    impossible = {} # add the seeds here?
+    impossible = dict(zip(seeds, itertools.repeat(True)))
     unused = seeds[:]
     used = []
     #t1 = 0
@@ -108,7 +108,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.01):
+def pbm_learn(net_d, net_m, epsilon=100):
     #d = data, m = model
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
@@ -131,13 +131,20 @@ def running_sum(net):
         else:
             running_neg += 1
 
+def redo_arr(arr):
+    ravelled = arr.flat
+    for x in xrange(arr.size):
+        if ravelled[x] == 0:
+            ravelled[x] = -1
+    return arr
+
 def create_word_graph(filename="corpus.txt"):
     net = nx.Graph()
     with open(filename, "r") as corpus_file:
         words = corpus_file.read().split()
         washed, word_dict = wash(words)
         for first, second in zip(washed, washed[1:]):
-            net.add_edge(first, second, weight=npr.normal())
+            net.add_edge(first, second, weight=npr.normal() * 0.05)
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     return net
@@ -161,9 +168,11 @@ def completion_task(net, data_head, len_data):
     @returns the whole 1d data array, completed
     """
     data_head = np.array(data_head)
-    seeds = get_seeds(net, len_data)
+    #seeds = get_seeds(net, len_data)
+    seeds = get_seeds(net, data_head.shape[0])
     len_tail = len_data - data_head.shape[0]
-    genned_tail = np.rint(npr.random(len_tail))
+    #genned_tail = np.ones(len_tail)
+    genned_tail = redo_arr(np.rint(npr.random(len_tail)))
     total_data = np.hstack((data_head, genned_tail))
     net2 = pbm_clamp(net.copy(), total_data)
     pbm_search(net2, seeds, 0.75)
@@ -193,16 +202,35 @@ def make_mnist_sample():
     sample, completion = train_zeros[:500], train_zeros[1000]
     return sample, completion
 
-if __name__ == "__main__":
+def mnist_test():
     sample, completion = make_mnist_sample()
+    completion = sample[0]
     net = create_word_graph()
-    for x in xrange(500):
+    for x in xrange(2):
         print "x: ", x
-        net = learn_step(net, np.rint(sample[x]))
-    print np.array(get_tops(net, 784))
+        net = learn_step(net, redo_arr(np.rint(sample[0])))
     print "============"
-    completion = np.rint(completion[:392])
+    completion = redo_arr(np.rint(completion[:392]))
     res2 = completion_task(net, completion, 784)
     res2 = res2.reshape(28, 28)
+    print res2
     plt.imshow(res2)
     plt.savefig("res2")
+
+def small_vec_test():
+    net = create_word_graph()
+    data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
+    print np.array(get_tops(net, 784))
+    print "============"
+    for x in xrange(3):
+        print "x: ", x
+        net = learn_step(net, data)
+    data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
+    res2 = completion_task(net, data2, 784)
+    res2 = res2.reshape(98, 8)
+    print res2
+    plt.imshow(res2)
+    plt.savefig("res2_small")
+
+if __name__ == "__main__":
+    small_vec_test()
