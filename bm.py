@@ -148,7 +148,7 @@ def create_word_graph(filename="corpus.txt"):
         words = corpus_file.read().split()
         washed, word_dict = wash(words)
         for first, second in zip(washed, washed[1:]):
-            net.add_edge(first, second, weight=npr.normal() * 0.05)
+            net.add_edge(first, second, weight=npr.normal() * 0.01)
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     return net
@@ -210,7 +210,7 @@ def make_mnist_sample():
 def mnist_test():
     sample, completion = make_mnist_sample()
     net = create_word_graph()
-    for x in xrange(15):
+    for x in xrange(500):
         print "x: ", x
         net = learn_step(net, redo_arr(np.rint(sample[x])))
     print "============"
