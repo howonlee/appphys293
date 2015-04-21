@@ -234,5 +234,15 @@ def small_vec_test():
     plt.imshow(res2)
     plt.savefig("res2_small")
 
+def energy_test():
+    net = create_word_graph()
+    data = np.array([-1, 1, -1, 1, 1, -1, -1, 1] * 98)
+    rands = redo_arr(np.rint(npr.random(len(net))))
+    seeds = get_seeds(net, data.shape[0]) #seed INDICES
+    pbm_model, pbm_data = pbm_clamp(net.copy(), rands), pbm_clamp(net.copy(), data)
+    pbm_model_searched = pbm_search(pbm_model, seeds, 0.75) #mutates
+    pbm_data_searched = pbm_search(pbm_data, seeds, 0.75) #mutates
+    pbm_data_learned = pbm_learn(pbm_data, pbm_model)
+
 if __name__ == "__main__":
     small_vec_test()
