@@ -6,6 +6,7 @@ import itertools
 import collections
 import random
 import time
+import math
 import cPickle
 import matplotlib.pyplot as plt
 import gzip
@@ -108,7 +109,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=100):
+def pbm_learn(net_d, net_m, epsilon=0.5):
     #d = data, m = model
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
@@ -116,7 +117,7 @@ def pbm_learn(net_d, net_m, epsilon=100):
     for data_edge in net_d.edges_iter():
         h, t = data_edge #head, tail of the edge
         delta = epsilon * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
-        total_delta += delta
+        total_delta += abs(delta)
         net_d[h][t]["weight"] -= delta
     print "total delta for this learn step: ", total_delta
     return net_d
@@ -155,7 +156,8 @@ def learn_step(net, data):
     """
     data = np.array(data)
     seeds = get_seeds(net, data.shape[0]) #seed INDICES
-    pbm_model, pbm_data = net.copy(), pbm_clamp(net.copy(), data)
+    rands = redo_arr(np.rint(npr.random(len(net))))
+    pbm_model, pbm_data = pbm_clamp(net.copy(), rands), pbm_clamp(net.copy(), data)
     pbm_search(pbm_model, seeds, 0.75) #mutates
     pbm_search(pbm_data, seeds, 0.75) #mutates
     return pbm_learn(pbm_data, pbm_model)
@@ -222,7 +224,7 @@ def small_vec_test():
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
     print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(3):
+    for x in xrange(5):
         print "x: ", x
         net = learn_step(net, data)
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
