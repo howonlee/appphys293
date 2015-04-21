@@ -109,14 +109,17 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.1):
+def pbm_learn(net_d, net_m, epsilon=1):
     #d = data, m = model
+    #they better have the same topology
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
+    degree_dict = nx.degree(net_d)
     total_delta = 0
     for data_edge in net_d.edges_iter():
         h, t = data_edge #head, tail of the edge
-        delta = epsilon * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
+        deg = 1.0 / (float(max(degree_dict[h], degree_dict[t])) ** 2.5)
+        delta = epsilon * deg * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
         total_delta += abs(delta)
         net_d[h][t]["weight"] += delta
     print "total delta for this learn step: ", total_delta
@@ -206,11 +209,10 @@ def make_mnist_sample():
 
 def mnist_test():
     sample, completion = make_mnist_sample()
-    completion = sample[0]
     net = create_word_graph()
-    for x in xrange(2):
+    for x in xrange(15):
         print "x: ", x
-        net = learn_step(net, redo_arr(np.rint(sample[0])))
+        net = learn_step(net, redo_arr(np.rint(sample[x])))
     print "============"
     completion = redo_arr(np.rint(completion[:392]))
     res2 = completion_task(net, completion, 784)
@@ -224,7 +226,7 @@ def small_vec_test():
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
     print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(1):
+    for x in xrange(75):
         print "x: ", x
         net = learn_step(net, data)
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
@@ -260,7 +262,9 @@ def energy_test():
     print "energy model: ", energy(pbm_model)
     print "energy data: ", energy(pbm_data)
     #conclusion: great fit, shit generalization
+    #heeeey, overfitting
 
 if __name__ == "__main__":
-    small_vec_test()
+    mnist_test()
+    #small_vec_test()
     #energy_test()
