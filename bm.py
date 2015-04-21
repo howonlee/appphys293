@@ -109,7 +109,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.5):
+def pbm_learn(net_d, net_m, epsilon=0.1):
     #d = data, m = model
     states_d = nx.get_node_attributes(net_d, "state")
     states_m = nx.get_node_attributes(net_m, "state")
@@ -118,7 +118,7 @@ def pbm_learn(net_d, net_m, epsilon=0.5):
         h, t = data_edge #head, tail of the edge
         delta = epsilon * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
         total_delta += abs(delta)
-        net_d[h][t]["weight"] -= delta
+        net_d[h][t]["weight"] += delta
     print "total delta for this learn step: ", total_delta
     return net_d
 
@@ -224,7 +224,7 @@ def small_vec_test():
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
     print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(5):
+    for x in xrange(1):
         print "x: ", x
         net = learn_step(net, data)
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
@@ -238,17 +238,29 @@ def energy_test():
     net = create_word_graph()
     data = np.array([-1, 1, -1, 1, 1, -1, -1, 1] * 98)
     rands = redo_arr(np.rint(npr.random(len(net))))
-    orig_state = something something ### something something
     seeds = get_seeds(net, data.shape[0]) #seed INDICES
     pbm_model, pbm_data = pbm_clamp(net.copy(), rands), pbm_clamp(net.copy(), data)
+    orig_state = np.array(get_tops(pbm_data, len(pbm_data)))
+    print "before searching, before learning:"
     print "energy model: ", energy(pbm_model)
     print "energy data: ", energy(pbm_data)
     pbm_search(pbm_model, seeds, 0.75)
     pbm_search(pbm_data, seeds, 0.75)
+    print "after searching, before learning:"
     print "energy model: ", energy(pbm_model)
     print "energy data: ", energy(pbm_data)
     pbm_learn(pbm_data, pbm_model)
-    pbm_model, pbm_data = pbm_clamp(pbm_data.copy(), rands), pbm_clamp(pbm_data.copy(), data)
+    pbm_model, pbm_data = pbm_clamp(pbm_data.copy(), rands), pbm_clamp(pbm_data.copy(), orig_state)
+    print "before searching, after learning:"
+    print "energy model: ", energy(pbm_model)
+    print "energy data: ", energy(pbm_data)
+    pbm_search(pbm_model, seeds, 0.75)
+    pbm_search(pbm_data, seeds, 0.75)
+    print "after searching, after learning:"
+    print "energy model: ", energy(pbm_model)
+    print "energy data: ", energy(pbm_data)
+    #conclusion: great fit, shit generalization
 
 if __name__ == "__main__":
-    energy_test()
+    small_vec_test()
+    #energy_test()
