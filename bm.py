@@ -24,6 +24,7 @@ def wash(words):
     return washed, word_dict
 
 def get_seeds(net, num_seeds):
+    print "walla"
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
@@ -109,7 +110,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=0.001):
+def pbm_learn(net_d, net_m, epsilon=0.1):
     #d = data, m = model
     #they better have the same topology
     states_d = nx.get_node_attributes(net_d, "state")
@@ -161,6 +162,22 @@ def create_er_graph(n=1000, p=0.050):
     for node in net.nodes_iter():
         net.node[node]["state"] = flip()
     return net
+
+def create_complete_graph(n=10):
+    net = nx.complete_graph(n)
+    for first, second in net.edges_iter():
+        net[first][second]["weight"] = 0.5
+    for node in net.nodes_iter():
+        net.node[node]["state"] = flip()
+    return net
+
+def print_net(net):
+    print "states:"
+    for node in net.nodes_iter():
+        print "n: %d, state: %d" % (node, net.node[node]["state"])
+    print "edges: "
+    for first, second in net.edges_iter():
+        print "%d %d: %f" % (first, second, net[first][second]["weight"])
 
 def learn_step(net, data):
     """
@@ -276,8 +293,20 @@ def energy_test(net):
     #conclusion: great fit, shit generalization
     #heeeey, overfitting
 
+def tiny_vec_test(net):
+    data = [-1,-1,1,1,-1,-1]
+    for x in xrange(1000):
+        print "x: ", x
+        net = learn_step(net, data)
+        print_net(net)
+    data2 = [-1, -1, 1]
+    res2 = completion_task(net, data2, 6)
+    print_net(net)
+    print res2
+
 if __name__ == "__main__":
-    net = create_er_graph(n=800)
+    net = create_complete_graph(8)
+    tiny_vec_test(net)
     #mnist_test()
-    small_vec_test(net)
+    #small_vec_test(net)
     #energy_test(net)
