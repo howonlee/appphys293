@@ -118,7 +118,7 @@ def pbm_learn(net_d, net_m, epsilon=1):
     total_delta = 0
     for data_edge in net_d.edges_iter():
         h, t = data_edge #head, tail of the edge
-        deg = 1.0 / (float(max(degree_dict[h], degree_dict[t])) ** 2.5)
+        deg = 1.0 / (float(max(degree_dict[h], degree_dict[t])) ** 4.5)
         delta = epsilon * deg * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
         total_delta += abs(delta)
         net_d[h][t]["weight"] += delta
@@ -148,7 +148,7 @@ def create_word_graph(filename="corpus.txt"):
         words = corpus_file.read().split()
         washed, word_dict = wash(words)
         for first, second in zip(washed, washed[1:]):
-            net.add_edge(first, second, weight=npr.normal() * 0.01)
+            net.add_edge(first, second, weight=npr.normal() * 0.001)
     for node, node_data in net.nodes_iter(data=True):
         node_data["state"] = flip()
     return net
@@ -210,7 +210,7 @@ def make_mnist_sample():
 def mnist_test():
     sample, completion = make_mnist_sample()
     net = create_word_graph()
-    for x in xrange(500):
+    for x in xrange(1):
         print "x: ", x
         net = learn_step(net, redo_arr(np.rint(sample[x])))
     print "============"
@@ -226,7 +226,7 @@ def small_vec_test():
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
     print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(75):
+    for x in xrange(3):
         print "x: ", x
         net = learn_step(net, data)
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
@@ -265,6 +265,6 @@ def energy_test():
     #heeeey, overfitting
 
 if __name__ == "__main__":
-    mnist_test()
-    #small_vec_test()
+    #mnist_test()
+    small_vec_test()
     #energy_test()
