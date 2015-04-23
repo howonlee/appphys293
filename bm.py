@@ -24,7 +24,6 @@ def wash(words):
     return washed, word_dict
 
 def get_seeds(net, num_seeds):
-    print "walla"
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
@@ -299,13 +298,15 @@ def tiny_vec_test(net):
         print "x: ", x
         net = learn_step(net, data)
         print_net(net)
-    data2 = [-1, -1, 1]
-    res2 = completion_task(net, data2, 6)
-    print_net(net)
-    print res2
+    #total_reses = np.array([0,0,0,0,0,0])
+    #for y in xrange(1000):
+    #    data2 = [-1, -1, 1]
+    #    res2 = completion_task(net, data2, 6)
+    #    total_reses += res2
+    #print total_reses
 
 if __name__ == "__main__":
-    net = create_complete_graph(8)
+    net = create_complete_graph(9)
     tiny_vec_test(net)
     #mnist_test()
     #small_vec_test(net)
