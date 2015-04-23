@@ -109,7 +109,7 @@ def pbm_search(net, seeds, r):
         #set it here, omae
     return used
 
-def pbm_learn(net_d, net_m, epsilon=1):
+def pbm_learn(net_d, net_m, epsilon=0.001):
     #d = data, m = model
     #they better have the same topology
     states_d = nx.get_node_attributes(net_d, "state")
@@ -118,8 +118,8 @@ def pbm_learn(net_d, net_m, epsilon=1):
     total_delta = 0
     for data_edge in net_d.edges_iter():
         h, t = data_edge #head, tail of the edge
-        deg = 1.0 / (float(max(degree_dict[h], degree_dict[t])) ** 4.5)
-        delta = epsilon * deg * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
+        #deg = 1.0 / (float(max(degree_dict[h], degree_dict[t])) ** 4.5)
+        delta = epsilon * (states_d[h] * states_d[t] - states_m[h] * states_m[t]) #the network values for this
         total_delta += abs(delta)
         net_d[h][t]["weight"] += delta
     print "total delta for this learn step: ", total_delta
@@ -153,6 +153,15 @@ def create_word_graph(filename="corpus.txt"):
         node_data["state"] = flip()
     return net
 
+def create_er_graph(n=1000, p=0.050):
+    #you also need the weights, which is why this is not a simple call to nx
+    net = nx.fast_gnp_random_graph(n,p)
+    for first, second in net.edges_iter():
+        net[first][second]["weight"] = 1
+    for node in net.nodes_iter():
+        net.node[node]["state"] = flip()
+    return net
+
 def learn_step(net, data):
     """
     Data should be 1d numpy array
@@ -163,6 +172,9 @@ def learn_step(net, data):
     pbm_model, pbm_data = pbm_clamp(net.copy(), rands), pbm_clamp(net.copy(), data)
     pbm_search(pbm_model, seeds, 0.75) #mutates
     pbm_search(pbm_data, seeds, 0.75) #mutates
+    print "after searching, before learning:"
+    print "energy model: ", energy(pbm_model)
+    print "energy data: ", energy(pbm_data)
     return pbm_learn(pbm_data, pbm_model)
 
 def completion_task(net, data_head, len_data):
@@ -221,14 +233,15 @@ def mnist_test():
     plt.imshow(res2)
     plt.savefig("res2")
 
-def small_vec_test():
-    net = create_word_graph()
+def small_vec_test(net):
     data = [-1, 1, -1, 1, 1, -1, -1, 1] * 98
     print np.array(get_tops(net, 784))
     print "============"
-    for x in xrange(3):
+    for x in xrange(100):
         print "x: ", x
         net = learn_step(net, data)
+        print "after searching, before learning:"
+        print "energy model: ", energy(net)
     data2 = [-1, 1, -1, 1, 1, -1, -1, 1] * 49
     res2 = completion_task(net, data2, 784)
     res2 = res2.reshape(98, 8)
@@ -236,8 +249,7 @@ def small_vec_test():
     plt.imshow(res2)
     plt.savefig("res2_small")
 
-def energy_test():
-    net = create_word_graph()
+def energy_test(net):
     data = np.array([-1, 1, -1, 1, 1, -1, -1, 1] * 98)
     rands = redo_arr(np.rint(npr.random(len(net))))
     seeds = get_seeds(net, data.shape[0]) #seed INDICES
@@ -265,6 +277,7 @@ def energy_test():
     #heeeey, overfitting
 
 if __name__ == "__main__":
+    net = create_er_graph(n=800)
     #mnist_test()
-    small_vec_test()
-    #energy_test()
+    small_vec_test(net)
+    #energy_test(net)
