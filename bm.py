@@ -178,6 +178,12 @@ def print_net(net):
     for first, second in net.edges_iter():
         print "%d %d: %f" % (first, second, net[first][second]["weight"])
 
+def net_array(net):
+    net_arr = []
+    for node in net.nodes_iter():
+        net_arr.append(net.node[node]["state"])
+    return np.array(net_arr)
+
 def learn_step(net, data):
     """
     Data should be 1d numpy array
@@ -294,13 +300,15 @@ def energy_test(net):
 
 def tiny_vec_test(net):
     data = [-1,-1,1,1,-1,-1]
+    total_net = np.array([0,0,0,0,0,0,0,0,0])
     for x in xrange(1000):
         print "x: ", x
         net = learn_step(net, data)
-        print_net(net)
+        total_net += net_array(net)
+    print total_net
     #total_reses = np.array([0,0,0,0,0,0])
+    #data2 = [-1, -1, 1]
     #for y in xrange(1000):
-    #    data2 = [-1, -1, 1]
     #    res2 = completion_task(net, data2, 6)
     #    total_reses += res2
     #print total_reses
