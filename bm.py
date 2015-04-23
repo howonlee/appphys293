@@ -298,23 +298,52 @@ def energy_test(net):
     #conclusion: great fit, shit generalization
     #heeeey, overfitting
 
+def sample_step(net, data):
+    data = np.array(data)
+    seeds = get_seeds(net, data.shape[0]) #seed INDICES
+    pbm_data = pbm_clamp(net.copy(), data)
+    pbm_search(pbm_data, seeds, 0.75) #mutates
+    return pbm_data
+
+def model_step(net, data):
+    data = np.array(data)
+    seeds = get_seeds(net, data.shape[0]) #seed INDICES
+    rands = redo_arr(np.rint(npr.random(len(net))))
+    pbm_model = pbm_clamp(net.copy(), rands)
+    pbm_search(pbm_model, seeds, 0.75) #mutates
+    return pbm_model
+
+def learn_step2(net, total_net, model_net, epsilon=0.001):
+    #d = data, m = model
+    #they better have the same topology
+    total_delta = 0
+    for h, t in net.edges_iter():
+        delta = epsilon * (total_net[h] * total_net[t] - model_net[h] * model_net[t]) #the network values for this
+        total_delta += abs(delta)
+        net[h][t]["weight"] += delta
+    print "total delta for this learn step: ", total_delta
+    return net
+
 def tiny_vec_test(net):
     data = [-1,-1,1,1,-1,-1]
-    total_net = np.array([0,0,0,0,0,0,0,0,0])
-    for x in xrange(1000):
-        print "x: ", x
-        net = learn_step(net, data)
-        total_net += net_array(net)
+    total_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
+    model_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
+    for y in xrange(300):
+        total_net += net_array(sample_step(net, data))
     print total_net
-    #total_reses = np.array([0,0,0,0,0,0])
-    #data2 = [-1, -1, 1]
-    #for y in xrange(1000):
-    #    res2 = completion_task(net, data2, 6)
-    #    total_reses += res2
-    #print total_reses
+    for y in xrange(300):
+        model_net += net_array(model_step(net, data))
+    print model_net
+    learn_step2(net, total_net, model_net)
+    total_reses = np.array([0,0,0,0,0,0])
+    data2 = [-1, -1, 1]
+    for y in xrange(1000):
+        res2 = completion_task(net, data2, 6)
+        total_reses += res2
+    print total_reses
 
 if __name__ == "__main__":
-    net = create_complete_graph(9)
+    net = create_complete_graph(12)
     tiny_vec_test(net)
     #mnist_test()
     #small_vec_test(net)
