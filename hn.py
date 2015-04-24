@@ -33,5 +33,11 @@ def create_word_graph(filename="corpus.txt"):
         node_data["state"] = flip()
     return net
 
+#here is the suspicion:
+#uncool kids' gradient descent on a hopfield net with cool kids topology
+#will work way better than expected
+#because of sparsity and percolation
+#very strong partial recognition
+
 if __name__ == "__main__":
     pass

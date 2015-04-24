@@ -61,9 +61,13 @@ def flip():
         return 1
     return -1
 
+def sigmoid(val):
+    return (1. / (1.0 + np.exp(-val)))
+
 def node_state(val):
     #hopfield update, kind of (not really)
-    if val > 0:
+    prob = sigmoid(val)
+    if random.random() > prob:
         return 1
     return -1
 
@@ -302,7 +306,8 @@ def sample_step(net, data):
     data = np.array(data)
     seeds = get_seeds(net, data.shape[0]) #seed INDICES
     pbm_data = pbm_clamp(net.copy(), data)
-    pbm_search(pbm_data, seeds, 0.75) #mutates
+    for x in xrange(10):
+        pbm_search(pbm_data, seeds, 0.75) #mutates
     return pbm_data
 
 def model_step(net, data):
@@ -310,7 +315,8 @@ def model_step(net, data):
     seeds = get_seeds(net, data.shape[0]) #seed INDICES
     rands = redo_arr(np.rint(npr.random(len(net))))
     pbm_model = pbm_clamp(net.copy(), rands)
-    pbm_search(pbm_model, seeds, 0.75) #mutates
+    for x in xrange(10):
+        pbm_search(pbm_model, seeds, 0.75) #mutates
     return pbm_model
 
 def learn_step2(net, total_net, model_net, epsilon=0.001):
@@ -326,15 +332,16 @@ def learn_step2(net, total_net, model_net, epsilon=0.001):
 
 def tiny_vec_test(net):
     data = [-1,-1,1,1,-1,-1]
-    total_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
-    model_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
-    for y in xrange(300):
-        total_net += net_array(sample_step(net, data))
-    print total_net
-    for y in xrange(300):
-        model_net += net_array(model_step(net, data))
-    print model_net
-    learn_step2(net, total_net, model_net)
+    for x in xrange(50):
+        total_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
+        model_net = np.array([0,0,0,0,0,0,0,0,0,0,0,0])
+        for y in xrange(300):
+            total_net += net_array(sample_step(net, data))
+        print total_net
+        for y in xrange(300):
+            model_net += net_array(model_step(net, data))
+        print model_net
+        learn_step2(net, total_net, model_net)
     total_reses = np.array([0,0,0,0,0,0])
     data2 = [-1, -1, 1]
     for y in xrange(1000):
@@ -343,7 +350,7 @@ def tiny_vec_test(net):
     print total_reses
 
 if __name__ == "__main__":
-    net = create_complete_graph(12)
+    net = create_er_graph(n=12, p=0.5)
     tiny_vec_test(net)
     #mnist_test()
     #small_vec_test(net)
