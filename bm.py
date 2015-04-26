@@ -10,28 +10,11 @@ import cPickle
 import matplotlib.pyplot as plt
 import gzip
 
-def wash(words):
-    curr_word = 0
-    washed = []
-    word_dict = {}
-    for word in words:
-        if word in word_dict:
-            washed.append(word_dict[word])
-        else:
-            word_dict[word] = curr_word
-            curr_word += 1
-    return washed, word_dict
-
-def create_word_graph(filename="corpus.txt"):
-    net = nx.Graph()
-    with open(filename, "r") as corpus_file:
-        words = corpus_file.read().split()
-        washed, word_dict = wash(words)
-        for first, second in zip(washed, washed[1:]):
-            net.add_edge(first, second, weight=npr.normal() * 0.1)
-    for node, node_data in net.nodes_iter(data=True):
-        node_data["state"] = flip()
-    return net
+"""
+Not sure why PBM not working
+The thing to do, then is create an utterly conventional BM with boring kids topology
+and only then make it more interesting with the cool kids topology
+"""
 
 def create_complete_graph(n=10):
     net = nx.complete_graph(n)
@@ -68,6 +51,9 @@ def energy(net):
         weight = net[first][second]["weight"]
         total_energy -= weight * nodes[first]["state"] * nodes[second]["state"]
     return total_energy
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
 def bm_search(net, seeds, num_iters=1000):
     for x in xrange(num_iters):
@@ -107,6 +93,21 @@ def tiny_vec_test(net):
         for y in xrange(300):
             model_net += net_array(model_step(net, data))
         print model_net
+
+def sa_burn(net, num_iters=100):
+    nodes = net.nodes()
+    for x in xrange(num_iters):
+        curr_node = random.choice(nodes)
+        curr_input = 0
+        for neighbor in net.neighbors(curr_node):
+            curr_input += activity * weight to the thing
+        if random.random() < sigmoid(curr_input):
+            net.nodes[curr_node]["state"] = 1
+        else:
+            net.nodes[curr_node]["state"] = 0
+
+def sa_sample(net, num_iters=1000):
+    pass
 
 if __name__ == "__main__":
     net = create_complete_graph()
