@@ -65,8 +65,9 @@ def make_mnist_sample():
     train_set, valid_set, test_set = unpickle_mnist()
     train_data, train_labels = unpack_set(train_set)
     train_zeros = get_digit(train_data, train_labels, 0)
+    train_ones = get_digit(train_data, train_labels, 1)
     random.shuffle(train_zeros) #inplace
-    sample, completion = train_zeros[:500], train_zeros[1000]
+    sample, completion = train_data[:500], train_data[1000]
     return sample, completion
 
 def save_weights(net, filename="net_weights"):
@@ -128,7 +129,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() * 5 #this works, why does it work
+        num_iters = net.number_of_nodes() * 5  #this works, why does it work
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -166,8 +167,7 @@ def sa_sample(net, data=None, num_iters=None):
 
 def sa_learn(net, data, num_iters=None, epsilon=0.01):
     if not num_iters:
-        #num_iters = len(data)
-        num_iters = 5
+        num_iters = len(data)
         print >> sys.stderr, "total iters: ", num_iters
     for x in xrange(num_iters):
         #do you even python 2.6 bro
