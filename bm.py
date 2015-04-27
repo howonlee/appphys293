@@ -5,7 +5,7 @@ import operator as op
 import itertools
 import collections
 import random
-import time
+import datetime
 import sys
 import cPickle
 import matplotlib.pyplot as plt
@@ -44,6 +44,30 @@ def load_krongraph(filename="kron.edgelist"):
         net.node[node]["state"] = int(round(random.random()))
     net.max_node = max_node + 1
     return net
+
+def unpickle_mnist(filename="mnist.pkl.gz"):
+    with gzip.open(filename, "rb") as gzip_file:
+        train_set, valid_set, test_set = cPickle.load(gzip_file)
+    return train_set, valid_set, test_set
+
+def unpack_set(data_set):
+    data, labels = data_set
+    data_list, label_list = [], []
+    for x in xrange(data.shape[0]):
+        data_list.append(data[x, :])
+        label_list.append(labels[x])
+    return data_list, label_list
+
+def get_digit(data_list, label_list, digit):
+    return [x[1] for x in filter(lambda x: label_list[x[0]] == digit, enumerate(data_list))]
+
+def make_mnist_sample():
+    train_set, valid_set, test_set = unpickle_mnist()
+    train_data, train_labels = unpack_set(train_set)
+    train_zeros = get_digit(train_data, train_labels, 0)
+    random.shuffle(train_zeros) #inplace
+    sample, completion = train_zeros[:500], train_zeros[1000]
+    return sample, completion
 
 def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
@@ -89,7 +113,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() * 10 #hope this works
+        num_iters = net.number_of_nodes() * 2 #hope this works
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -114,10 +138,11 @@ def sa_clamp_burn(net, data):
 def sa_sample(net, data=None, num_iters=None):
     total_states = np.zeros(net.max_node)
     if not num_iters:
-        num_iters = net.number_of_nodes() * 5
+        num_iters = 10 #is this kosher?
     for x in xrange(num_iters):
+        #print >> sys.stderr, "sample step x: ", x, " / ", num_iters
         randomize_net(net)
-        if data:
+        if data is not None:
             sa_clamp_burn(net, data)
         else:
             sa_burn(net)
@@ -126,10 +151,12 @@ def sa_sample(net, data=None, num_iters=None):
 
 def sa_learn(net, data, num_iters=None, epsilon=0.0001):
     if not num_iters:
-        num_iters = len(data) * 5
+        #num_iters = len(data)
+        num_iters = 50
+        print >> sys.stderr, "total iters: ", num_iters
     for x in xrange(num_iters):
         #do you even python 2.6 bro
-        print >> sys.stderr, "learn step x: ", x
+        print >> sys.stderr, "learn step x: ", x, datetime.datetime.now()
         curr_data = random.choice(data)
         model_sample = sa_sample(net)
         data_sample = sa_sample(net, curr_data)
@@ -141,11 +168,14 @@ def sa_learn(net, data, num_iters=None, epsilon=0.0001):
 if __name__ == "__main__":
     #i named everything sa
     #shit ain't sa, it's just gd
-    net = load_krongraph()
-    data = [[0,0,1,1,0,0], [0,0,1,0,1,1]]
+    net = load_krongraph("kron2.edgelist")
+    #net = create_complete_graph(n=2048)
+    data, completion = make_mnist_sample()
     top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
     sa_learn(net, data)
-    sampled = list(sa_sample(net, [0,0,1]))
-    print "sampled without reordering: ", sampled
+    sampled = list(sa_sample(net, completion[:392]))
     sampled = [sampled[i] for i in top]
-    print "sampled with reordering: ", sampled
+    genned = np.array(sampled[0:784])
+    genned = genned.reshape(28, 28)
+    plt.imshow(genned)
+    plt.savefig("genned")
