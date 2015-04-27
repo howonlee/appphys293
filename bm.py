@@ -128,7 +128,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() * 2 #hope this works
+        num_iters = net.number_of_nodes() * 5 #this works, why does it work
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -167,7 +167,7 @@ def sa_sample(net, data=None, num_iters=None):
 def sa_learn(net, data, num_iters=None, epsilon=0.01):
     if not num_iters:
         #num_iters = len(data)
-        num_iters = 10
+        num_iters = 5
         print >> sys.stderr, "total iters: ", num_iters
     for x in xrange(num_iters):
         #do you even python 2.6 bro
