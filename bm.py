@@ -149,10 +149,10 @@ def sa_sample(net, data=None, num_iters=None):
         total_states += get_net_states(net)
     return total_states
 
-def sa_learn(net, data, num_iters=None, epsilon=0.0001):
+def sa_learn(net, data, num_iters=None, epsilon=0.01):
     if not num_iters:
         #num_iters = len(data)
-        num_iters = 50
+        num_iters = 10
         print >> sys.stderr, "total iters: ", num_iters
     for x in xrange(num_iters):
         #do you even python 2.6 bro
