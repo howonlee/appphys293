@@ -1,11 +1,12 @@
 import numpy as np
 import numpy.random as npr
 import networkx as nx
-import operator
+import operator as op
 import itertools
 import collections
 import random
 import time
+import sys
 import cPickle
 import matplotlib.pyplot as plt
 import gzip
@@ -22,27 +23,34 @@ def create_complete_graph(n=10):
         net[first][second]["weight"] = 0.5
     for node in net.nodes_iter():
         net.node[node]["state"] = int(round(random.random()))
+    net.max_node = n
     return net
 
 def load_krongraph(filename="kron.edgelist"):
     net = nx.Graph()
     #note kron edgelist 1 indexed because they are terrible
+    max_node = -1
     with open(filename) as kron_file:
         for line in kron_file:
             first, second = line.split()
-            net.add_edge(int(first)-1, int(second)-1)
+            net.add_edge(int(first), int(second))
+            if int(first) > max_node:
+                max_node = int(first)
+            if int(second) > max_node:
+                max_node = int(second)
     for first, second in net.edges_iter():
         net[first][second]["weight"] = 0.5
     for node in net.nodes_iter():
         net.node[node]["state"] = int(round(random.random()))
+    net.max_node = max_node + 1
     return net
 
 def get_seeds(net, num_seeds):
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
+    top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
     return [x[0] for x in top]
 
 def get_tops(net, num_seeds):
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:num_seeds]
+    top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
     nodes = dict(net.nodes(data=True))
     res = []
     for idx, seed in enumerate(top):
@@ -67,7 +75,7 @@ def randomize_net(net):
     return net
 
 def get_net_states(net):
-    states = np.zeros(net.number_of_nodes())
+    states = np.zeros(net.max_node)
     for node in net.nodes():
         states[node] = net.node[node]["state"]
     return states
@@ -97,14 +105,14 @@ def sa_burn(net, excluded_set=None, num_iters=None):
 
 def sa_clamp_burn(net, data):
     data = np.array(data)
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:data.shape[0]]
+    top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:data.shape[0]]
     for idx, seed in enumerate(top):
         net.node[seed[0]]["state"] = data[idx]
-    excluded_set = set(map(operator.itemgetter(0), top))
+    excluded_set = set(map(op.itemgetter(0), top))
     sa_burn(net, excluded_set)
 
 def sa_sample(net, data=None, num_iters=None):
-    total_states = np.zeros(net.number_of_nodes())
+    total_states = np.zeros(net.max_node)
     if not num_iters:
         num_iters = net.number_of_nodes() * 5
     for x in xrange(num_iters):
@@ -118,7 +126,8 @@ def sa_sample(net, data=None, num_iters=None):
 
 def sa_learn(net, data, num_iters=10, epsilon=0.0001):
     for x in xrange(num_iters):
-        print "learn step x: ", x
+        #do you even python 2.6 bro
+        print >> sys.stderr, "learn step x: ", x
         model_sample = sa_sample(net)
         data_sample = sa_sample(net, data)
         for h, t in net.edges_iter():
@@ -129,6 +138,9 @@ def sa_learn(net, data, num_iters=10, epsilon=0.0001):
 if __name__ == "__main__":
     net = load_krongraph()
     data = [0,0,1,1,0,0]
+    top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
     sa_learn(net, data)
-    sampled = sa_sample(net, [0,0,1])
-    #get the nets and order by the top params, basically
+    sampled = list(sa_sample(net, [0,0,1]))
+    print "sampled without reordering: ", sampled
+    sampled = [sampled[i] for i in top]
+    print "sampled with reordering: ", sampled
