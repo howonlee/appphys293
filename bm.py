@@ -124,20 +124,25 @@ def sa_sample(net, data=None, num_iters=None):
         total_states += get_net_states(net)
     return total_states
 
-def sa_learn(net, data, num_iters=10, epsilon=0.0001):
+def sa_learn(net, data, num_iters=None, epsilon=0.0001):
+    if not num_iters:
+        num_iters = len(data) * 5
     for x in xrange(num_iters):
         #do you even python 2.6 bro
         print >> sys.stderr, "learn step x: ", x
+        curr_data = random.choice(data)
         model_sample = sa_sample(net)
-        data_sample = sa_sample(net, data)
+        data_sample = sa_sample(net, curr_data)
         for h, t in net.edges_iter():
             delta = epsilon * (data_sample[h] * data_sample[t] - model_sample[h] * model_sample[t])
             net[h][t]["weight"] += delta
     return net
 
 if __name__ == "__main__":
+    #i named everything sa
+    #shit ain't sa, it's just gd
     net = load_krongraph()
-    data = [0,0,1,1,0,0]
+    data = [[0,0,1,1,0,0], [0,0,1,0,1,1]]
     top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
     sa_learn(net, data)
     sampled = list(sa_sample(net, [0,0,1]))
