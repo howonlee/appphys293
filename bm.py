@@ -21,7 +21,15 @@ def create_complete_graph(n=10):
     for first, second in net.edges_iter():
         net[first][second]["weight"] = 0.5
     for node in net.nodes_iter():
-        net.node[node]["state"] = flip()
+        net.node[node]["state"] = int(round(random.random()))
+    return net
+
+def load_krongraph(filename="kron.edgelist"):
+    net = nx.read_edgelist(filename)
+    for first, second in net.edges_iter():
+        net[first][second]["weight"] = 0.5
+    for node in net.nodes_iter():
+        net.node[node]["state"] = int(round(random.random()))
     return net
 
 def get_seeds(net, num_seeds):
@@ -36,14 +44,6 @@ def get_tops(net, num_seeds):
         res.append(nodes[seed[0]]["state"])
     return res
 
-def bm_clamp(net, data):
-    #data must be a 1d numpy array
-    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:data.shape[0]]
-    nodes = dict(net.nodes(data=True))
-    for idx, seed in enumerate(top):
-        nodes[seed[0]]["state"] = data[idx] #mutability, I hope
-    return net
-
 def energy(net):
     total_energy = 0
     nodes = dict(net.nodes(data=True))
@@ -55,60 +55,70 @@ def energy(net):
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
-def bm_search(net, seeds, num_iters=1000):
-    for x in xrange(num_iters):
-        pass#################
+def randomize_net(net):
+    for node in net.nodes():
+        val = int(round(random.random()))
+        net.node[node]["state"] = val
     return net
 
-def bm_sim(net, num_iters=1000):
-    for x in xrange(num_iters):
-        pass###############
-    return net
+def get_net_states(net):
+    states = np.zeros(net.number_of_nodes())
+    for node in net.nodes():
+        states[node] = net.node[node]["state"]
+    return states
 
-def sample_step(net, data):
-    data = np.array(data)
-    seeds = get_seeds(net, data.shape[0]) #seed INDICES
-    bm_data = bm_clamp(net.copy(), data)
-    for x in xrange(10):
-        bm_search(bm_data, seeds) #mutates
-    return bm_data
+def get_net_weights(net):
+    edges = {}
+    for h,t in net.edges():
+        edges[(h,t)] = net[h][t]["weight"]
+    return edges
 
-def model_step(net, data):
-    data = np.array(data)
-    seeds = get_seeds(net, data.shape[0]) #seed INDICES
-    rands = redo_arr(np.rint(npr.random(len(net))))
-    bm_model = bm_clamp(net.copy(), rands)
-    for x in xrange(10):
-        bm_search(bm_model, seeds) #mutates
-    return bm_model
-
-def tiny_vec_test(net):
-    data = [-1,-1,1,1,-1,-1]
-    for x in xrange(50):
-        total_net = np.array([0,0,0,0,0,0,0,0,0,0])
-        model_net = np.array([0,0,0,0,0,0,0,0,0,0])
-        for y in xrange(300):
-            total_net += net_array(sample_step(net, data))
-        print total_net
-        for y in xrange(300):
-            model_net += net_array(model_step(net, data))
-        print model_net
-
-def sa_burn(net, num_iters=100):
+def sa_burn(net, excluded_set=None, num_iters=100):
     nodes = net.nodes()
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
+        if excluded_set:
+            while curr_node in excluded_set:
+                curr_node = random.choice(nodes)
         curr_input = 0
         for neighbor in net.neighbors(curr_node):
-            curr_input += activity * weight to the thing
+            curr_input += net.node[neighbor]["state"] * net[curr_node][neighbor]["weight"]
         if random.random() < sigmoid(curr_input):
-            net.nodes[curr_node]["state"] = 1
+            net.node[curr_node]["state"] = 1
         else:
-            net.nodes[curr_node]["state"] = 0
+            net.node[curr_node]["state"] = 0
 
-def sa_sample(net, num_iters=1000):
-    pass
+def sa_clamp_burn(net, data, num_iters=1000):
+    data = np.array(data)
+    top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:data.shape[0]]
+    for idx, seed in enumerate(top):
+        net.node[seed[0]]["state"] = data[idx]
+    excluded_set = set(map(operator.itemgetter(0), top))
+    sa_burn(net, excluded_set, num_iters)
+
+def sa_sample(net, data=None, num_iters=100):
+    total_states = np.zeros(net.number_of_nodes())
+    for x in xrange(num_iters):
+        randomize_net(net)
+        if data:
+            sa_clamp_burn(net, data)
+        else:
+            sa_burn(net)
+        total_states += get_net_states(net)
+    return total_states
+
+def sa_learn(net, data, num_iters=10, epsilon=0.0001):
+    for x in xrange(num_iters):
+        print "learn step x: ", x
+        model_sample = sa_sample(net)
+        data_sample = sa_sample(net, data)
+        for h, t in net.edges_iter():
+            delta = epsilon * (data_sample[h] * data_sample[t] - model_sample[h] * model_sample[t])
+            net[h][t]["weight"] += delta
+    return net
 
 if __name__ == "__main__":
-    net = create_complete_graph()
-    tiny_vec_test(net)
+    net = load_krongraph()
+    data = [0,0,1,1,0,0]
+    sa_learn(net, data)
+    print sa_sample(net, [0,0,1])
