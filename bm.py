@@ -25,7 +25,12 @@ def create_complete_graph(n=10):
     return net
 
 def load_krongraph(filename="kron.edgelist"):
-    net = nx.read_edgelist(filename)
+    net = nx.Graph()
+    #note kron edgelist 1 indexed because they are terrible
+    with open(filename) as kron_file:
+        for line in kron_file:
+            first, second = line.split()
+            net.add_edge(int(first)-1, int(second)-1)
     for first, second in net.edges_iter():
         net[first][second]["weight"] = 0.5
     for node in net.nodes_iter():
@@ -76,7 +81,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_edges() * 10 #hope this works
+        num_iters = net.number_of_nodes() * 10 #hope this works
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -101,7 +106,7 @@ def sa_clamp_burn(net, data):
 def sa_sample(net, data=None, num_iters=None):
     total_states = np.zeros(net.number_of_nodes())
     if not num_iters:
-        num_iters = net.number_of_nodes() * 10
+        num_iters = net.number_of_nodes() * 5
     for x in xrange(num_iters):
         randomize_net(net)
         if data:
@@ -125,4 +130,5 @@ if __name__ == "__main__":
     net = load_krongraph()
     data = [0,0,1,1,0,0]
     sa_learn(net, data)
-    print sa_sample(net, [0,0,1])
+    sampled = sa_sample(net, [0,0,1])
+    #get the nets and order by the top params, basically
