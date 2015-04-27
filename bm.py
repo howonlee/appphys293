@@ -26,7 +26,7 @@ def create_complete_graph(n=10):
     net.max_node = n
     return net
 
-def load_krongraph(filename="kron.edgelist"):
+def load_file(filename="kron.edgelist"):
     net = nx.Graph()
     #note kron edgelist 1 indexed because they are terrible
     max_node = -1
@@ -68,6 +68,21 @@ def make_mnist_sample():
     random.shuffle(train_zeros) #inplace
     sample, completion = train_zeros[:500], train_zeros[1000]
     return sample, completion
+
+def save_weights(net, filename="net_weights"):
+    net_weights = np.zeros((net.max_node, net.max_node))
+    for h,t in net.edges_iter():
+        net_weights[h][t] = net[h][t]["weight"]
+    np.save(filename, net_weights)
+    print "net saved"
+
+def load_weights(net, filename="net_weights"):
+    #must have the right net beforehands
+    #meaning, unpickle that crap
+    net_weights = np.load(filename)
+    for h,t in net.edges_iter():
+        net[h][t]["weight"] = net_weights[h][t]
+    return net
 
 def get_seeds(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
@@ -168,7 +183,7 @@ def sa_learn(net, data, num_iters=None, epsilon=0.01):
 if __name__ == "__main__":
     #i named everything sa
     #shit ain't sa, it's just gd
-    net = load_krongraph("kron2.edgelist")
+    net = load_file("kron2.edgelist")
     #net = create_complete_graph(n=2048)
     data, completion = make_mnist_sample()
     top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
