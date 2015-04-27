@@ -73,8 +73,10 @@ def get_net_weights(net):
         edges[(h,t)] = net[h][t]["weight"]
     return edges
 
-def sa_burn(net, excluded_set=None, num_iters=100):
+def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
+    if not num_iters:
+        num_iters = net.number_of_edges() * 10 #hope this works
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -88,16 +90,18 @@ def sa_burn(net, excluded_set=None, num_iters=100):
         else:
             net.node[curr_node]["state"] = 0
 
-def sa_clamp_burn(net, data, num_iters=1000):
+def sa_clamp_burn(net, data):
     data = np.array(data)
     top = sorted(nx.degree(net).items(), key=operator.itemgetter(1), reverse=True)[:data.shape[0]]
     for idx, seed in enumerate(top):
         net.node[seed[0]]["state"] = data[idx]
     excluded_set = set(map(operator.itemgetter(0), top))
-    sa_burn(net, excluded_set, num_iters)
+    sa_burn(net, excluded_set)
 
-def sa_sample(net, data=None, num_iters=100):
+def sa_sample(net, data=None, num_iters=None):
     total_states = np.zeros(net.number_of_nodes())
+    if not num_iters:
+        num_iters = net.number_of_nodes() * 10
     for x in xrange(num_iters):
         randomize_net(net)
         if data:
