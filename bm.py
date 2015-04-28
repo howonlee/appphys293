@@ -197,6 +197,11 @@ def mnist_test():
 def vocab_test():
     net = load_file("kron2.edgelist")
     vocab_dict, vocab_list, total_vec = wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
+    #no labels as of yet, just the representations
+    #150, friend. then, train
+    #train = load_corpus("./data/train.txt")
+    #windows = make_windows(train, vocab_dict)
+    #make the samples
 
 if __name__ == "__main__":
     #i named everything sa
