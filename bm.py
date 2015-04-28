@@ -27,6 +27,28 @@ def create_complete_graph(n=10):
     net.max_node = n
     return net
 
+def load_corpus(filename="./data/train"):
+    corpus = []
+    with open(filename, "r") as corpus_file:
+        for line in corpus_file:
+            if len(line.strip()) > 0:
+                first, second = line.split()
+                corpus.append(first)
+    return corpus
+
+def safe_vocab_dict(vocab_dict, query):
+    try:
+        return vocab_dict[query]
+    except:
+        return vocab_dict["UUUNKKK"]
+
+def make_windows(corpus, vocab_dict):
+    trips = zip(corpus, corpus[1:], corpus[2:])
+    tripvecs = []
+    for trip in trips:
+        tripvecs.append(np.hstack([safe_vocab_dict(vocab_dict, word) for word in trip]))
+    return tripvecs
+
 def load_file(filename="kron.edgelist"):
     net = nx.Graph()
     #note kron edgelist 1 indexed because they are terrible
@@ -196,12 +218,19 @@ def mnist_test():
 
 def vocab_test():
     net = load_file("kron2.edgelist")
-    vocab_dict, vocab_list, total_vec = wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
+    vocab_dict, vocab_list, total_vec = wordvec.wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
     #no labels as of yet, just the representations
-    #150, friend. then, train
-    #train = load_corpus("./data/train.txt")
-    #windows = make_windows(train, vocab_dict)
-    #make the samples
+    train = load_corpus()
+    windows = make_windows(train, vocab_dict)
+    windows = windows[:500]
+    sa_learn(net, windows)
+
+    cut_last_window = windows[-1][0:100]
+    top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
+    sampled = list(sa_sample(net, cut_last_window)
+    sampled = [sampled[i] for i in top]
+    genned = np.array(sampled[0:150])
+    #try this loop, basically
 
 if __name__ == "__main__":
     #i named everything sa

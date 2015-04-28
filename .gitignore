@@ -2,4 +2,5 @@
 res
 *.png
 *.edgelist
+*.pyc
 data
