@@ -10,7 +10,7 @@ import sys
 import cPickle
 import matplotlib.pyplot as plt
 import gzip
-import vectorial_re
+import wordvec
 
 """
 Not sure why PBM not working
@@ -181,11 +181,9 @@ def sa_learn(net, data, num_iters=None, epsilon=0.01):
             net[h][t]["weight"] += delta
     return net
 
-if __name__ == "__main__":
-    #i named everything sa
-    #shit ain't sa, it's just gd
+def mnist_test():
+    #not the test stage in testing, just actually a proof of concept
     net = load_file("kron2.edgelist")
-    #net = create_complete_graph(n=2048)
     data, completion = make_mnist_sample()
     top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
     sa_learn(net, data)
@@ -195,3 +193,12 @@ if __name__ == "__main__":
     genned = genned.reshape(28, 28)
     plt.imshow(genned)
     plt.savefig("genned")
+
+def vocab_test():
+    net = load_file("kron2.edgelist")
+    vocab_dict, vocab_list, total_vec = wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
+
+if __name__ == "__main__":
+    #i named everything sa
+    #shit ain't sa, it's just gd
+    vocab_test()
