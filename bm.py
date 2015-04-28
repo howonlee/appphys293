@@ -152,7 +152,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() * 5  #this works, why does it work
+        num_iters = net.number_of_nodes() * 2  #this works, why does it work
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -216,23 +216,29 @@ def mnist_test():
     plt.imshow(genned)
     plt.savefig("genned")
 
-def vocab_test():
+def vocab_test(net_file=None):
     net = load_file("kron2.edgelist")
     vocab_dict, vocab_list, total_vec = wordvec.wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
-    #no labels as of yet, just the representations
     train = load_corpus()
     windows = make_windows(train, vocab_dict)
     windows = windows[:500]
-    sa_learn(net, windows)
-
-    cut_last_window = windows[-1][0:100]
-    top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
-    sampled = list(sa_sample(net, cut_last_window)
-    sampled = [sampled[i] for i in top]
-    genned = np.array(sampled[0:150])
-    #try this loop, basically
+    if not net_file:
+        #no labels as of yet, just the representations
+        sa_learn(net, windows)
+        save_weights(net, "vocab_net")
+    else:
+        net = load_weights(net, net_file)
+    print "total net learned now"
+    curr_window = windows[-1]
+    while True:
+        cut_window = curr_window[0:100]
+        top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))[0:150]
+        sampled = list(sa_sample(net, cut_window))
+        curr_window = np.array([sampled[i] for i in top])
+        next_wordvec = curr_window[100:]
+        print vocab_list[wordvec.nearest_neighbor(next_wordvec, total_vec)]
 
 if __name__ == "__main__":
     #i named everything sa
     #shit ain't sa, it's just gd
-    vocab_test()
+    vocab_test("vocab_net.npy")

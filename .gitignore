@@ -3,4 +3,5 @@ res
 *.png
 *.edgelist
 *.pyc
+*.npy
 data
