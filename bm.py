@@ -10,6 +10,7 @@ import sys
 import cPickle
 import matplotlib.pyplot as plt
 import gzip
+import vectorial_re
 
 """
 Not sure why PBM not working
