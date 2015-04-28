@@ -10,13 +10,7 @@ import sys
 import cPickle
 import matplotlib.pyplot as plt
 import gzip
-import wordvec
-
-"""
-Not sure why PBM not working
-The thing to do, then is create an utterly conventional BM with boring kids topology
-and only then make it more interesting with the cool kids topology
-"""
+import wordvec #own stuff
 
 def create_complete_graph(n=10):
     net = nx.complete_graph(n)
@@ -90,7 +84,7 @@ def make_mnist_sample():
     train_zeros = get_digit(train_data, train_labels, 0)
     train_ones = get_digit(train_data, train_labels, 1)
     random.shuffle(train_zeros) #inplace
-    sample, completion = train_data[:500], train_data[1000]
+    sample, completion = train_data[:50], train_data[1000]
     return sample, completion
 
 def save_weights(net, filename="net_weights"):
@@ -152,7 +146,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() * 2  #this works, why does it work
+        num_iters = net.number_of_nodes() // 2  #this works, why does it work
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -177,7 +171,7 @@ def sa_clamp_burn(net, data):
 def sa_sample(net, data=None, num_iters=None):
     total_states = np.zeros(net.max_node)
     if not num_iters:
-        num_iters = 10 #is this kosher?
+        num_iters = 20 #is this kosher?
     for x in xrange(num_iters):
         #print >> sys.stderr, "sample step x: ", x, " / ", num_iters
         randomize_net(net)
@@ -243,4 +237,4 @@ def vocab_test(net_file=None):
 if __name__ == "__main__":
     #i named everything sa
     #shit ain't sa, it's just gd
-    vocab_test()
+    mnist_test()
