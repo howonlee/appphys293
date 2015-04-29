@@ -56,7 +56,7 @@ def load_file(filename="kron.edgelist"):
             if int(second) > max_node:
                 max_node = int(second)
     for first, second in net.edges_iter():
-        net[first][second]["weight"] = 0.5
+        net[first][second]["weight"] = 0.1
     for node in net.nodes_iter():
         net.node[node]["state"] = int(round(random.random()))
     net.max_node = max_node + 1
@@ -146,7 +146,7 @@ def get_net_weights(net):
 def sa_burn(net, excluded_set=None, num_iters=None):
     nodes = net.nodes()
     if not num_iters:
-        num_iters = net.number_of_nodes() // 2  #this works, why does it work
+        num_iters = net.number_of_nodes() * 2  #this works, why does it work
     for x in xrange(num_iters):
         curr_node = random.choice(nodes)
         if excluded_set:
@@ -215,9 +215,7 @@ def vocab_test(net_file=None):
     vocab_dict, vocab_list, total_vec = wordvec.wordvec_dict("./data/vocab.txt", "./data/wordVectors.txt")
     train = load_corpus()
     windows = make_windows(train, vocab_dict)
-    print len(windows)
-    sys.exit(0)
-    windows = windows[:500]
+    windows = windows[:5000]
     if not net_file:
         #no labels as of yet, just the representations
         sa_learn(net, windows)
@@ -237,4 +235,4 @@ def vocab_test(net_file=None):
 if __name__ == "__main__":
     #i named everything sa
     #shit ain't sa, it's just gd
-    mnist_test()
+    vocab_test()
