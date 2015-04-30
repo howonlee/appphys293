@@ -1,5 +1,24 @@
 using Graphs
 
+function make_wordvec()
+  function wordvec_dict(vocab_filename, vec_filename)
+    ##################3
+  end
+
+  function nearest_neighbor(query_vec, data)
+    ############ k only needs to be 1 for now, but k later
+  end
+
+  function load_corpus(corpus_filename)
+    ##################3
+  end
+
+  function make_winows(corpus, vocab_dict)
+    ############3 windows like cs224n final project
+  end
+  ################33
+end
+
 function make_mnist_sample()
   function get_digit(data_list, label_list, digit)
     ##############
