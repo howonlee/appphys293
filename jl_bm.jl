@@ -88,7 +88,7 @@ end
 
 data = [1, 0, 1, 1, 0, 1]
 ############## all copied over from the python shit
-net = load_net_file("kron2.edgelist")
+net = load_net_file("kron.edgelist")
 tops = get_tops(net)
 bm_learn(net, data)
 #sampled = list(sa_sample(net, completion[:392]))
