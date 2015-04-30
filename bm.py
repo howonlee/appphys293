@@ -102,10 +102,6 @@ def load_weights(net, filename="net_weights"):
         net[h][t]["weight"] = net_weights[h][t]
     return net
 
-def get_seeds(net, num_seeds):
-    top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
-    return [x[0] for x in top]
-
 def get_tops(net, num_seeds):
     top = sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True)[:num_seeds]
     nodes = dict(net.nodes(data=True))
