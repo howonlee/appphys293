@@ -27,7 +27,7 @@ function load_weights(net, filename)
     ##############
 end
 
-function get_tops(net, num)
+function get_tops(net, num=None)
     ##############
 end
 
@@ -51,7 +51,7 @@ function get_net_weights(net)
     ##############
 end
 
-function bm_burn(net, excluded_set=None, num_iters=NOne)
+function bm_burn(net, excluded_set=None, num_iters=None)
     ##############
 end
 
@@ -69,12 +69,12 @@ end
 
 data = [1, 0, 1, 1, 0, 1]
 ############## all copied over from the python shit
-net = something
-top = map(op.itemgetter(0), sorted(nx.degree(net).items(), key=op.itemgetter(1), reverse=True))
+net = load_net_file("kron2.edgelist")
+tops = get_tops(net)
 bm_learn(net, data)
-sampled = list(sa_sample(net, completion[:392]))
-sampled = [sampled[i] for i in top]
-genned = np.array(sampled[0:784])
-genned = genned.reshape(28, 28)
-plt.imshow(genned)
-plt.savefig("genned")
+#sampled = list(sa_sample(net, completion[:392]))
+#sampled = [sampled[i] for i in top]
+#genned = np.array(sampled[0:784])
+#genned = genned.reshape(28, 28)
+#plt.imshow(genned)
+#plt.savefig("genned")
