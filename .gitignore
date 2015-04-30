@@ -1,6 +1,5 @@
 *.txt
 res
-*.png
 *.edgelist
 *.pyc
 *.npy
